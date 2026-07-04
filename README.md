@@ -16,8 +16,8 @@ Turn every place into a scrollable experience.
 
 | Email                 | Password   | Role        |
 |-----------------------|------------|-------------|
-| admin@scenvy.app      | admin123   | Super Admin |
-| venue@scenvy.app      | venue123   | Tenant CMS  |
+| admin@scenvy.de      | admin123   | Super Admin |
+| venue@scenvy.de      | venue123   | Tenant CMS  |
 
 ## API Endpoints
 
@@ -63,4 +63,4 @@ vercel              # Follow prompts
 - [ ] Set up a real domain in Vercel settings
 
 ---
-Built with React + Vite + Vercel · scenvy.app
+Built with React + Vite + Vercel · app.scenvy.de

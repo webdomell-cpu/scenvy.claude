@@ -2,11 +2,11 @@
 // ⚠️  For production: use a real DB + auth middleware
 
 let tenants = [
-  { id:"t1", name:"The Marina Group",  plan:"enterprise", locs:4,  reels:28, mrr:299, status:"active", since:"2025-11", email:"marina@scenvy.app"  },
-  { id:"t2", name:"Rooftop Bar 21",    plan:"pro",        locs:1,  reels:12, mrr:79,  status:"active", since:"2025-12", email:"rooftop@scenvy.app" },
-  { id:"t3", name:"Souk Street Food",  plan:"pro",        locs:3,  reels:19, mrr:79,  status:"active", since:"2026-01", email:"souk@scenvy.app"    },
-  { id:"t4", name:"DIFC Lounge & Co.", plan:"starter",    locs:1,  reels:4,  mrr:0,   status:"trial",  since:"2026-06", email:"difc@scenvy.app"    },
-  { id:"t5", name:"The Palm Events",   plan:"enterprise", locs:6,  reels:41, mrr:299, status:"active", since:"2025-10", email:"palm@scenvy.app"    },
+  { id:"t1", name:"The Marina Group",  plan:"enterprise", locs:4,  reels:28, mrr:299, status:"active", since:"2025-11", email:"marina@scenvy.de"  },
+  { id:"t2", name:"Rooftop Bar 21",    plan:"pro",        locs:1,  reels:12, mrr:79,  status:"active", since:"2025-12", email:"rooftop@scenvy.de" },
+  { id:"t3", name:"Souk Street Food",  plan:"pro",        locs:3,  reels:19, mrr:79,  status:"active", since:"2026-01", email:"souk@scenvy.de"    },
+  { id:"t4", name:"DIFC Lounge & Co.", plan:"starter",    locs:1,  reels:4,  mrr:0,   status:"trial",  since:"2026-06", email:"difc@scenvy.de"    },
+  { id:"t5", name:"The Palm Events",   plan:"enterprise", locs:6,  reels:41, mrr:299, status:"active", since:"2025-10", email:"palm@scenvy.de"    },
 ]
 
 export default function handler(req, res) {

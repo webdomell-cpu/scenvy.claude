@@ -2,10 +2,10 @@
 // ⚠️  For production: replace with real DB (Supabase, etc.)
 
 let locations = [
-  { id:"l1", name:"Marina Walk",      city:"Dubai Marina", scans:1247, watchRate:94, active:true,  qrUrl:"https://scenvy.app/l/l1", createdAt:"2025-11-01" },
-  { id:"l2", name:"JBR Terrace",      city:"JBR Beach",    scans:893,  watchRate:78, active:true,  qrUrl:"https://scenvy.app/l/l2", createdAt:"2025-11-15" },
-  { id:"l3", name:"DIFC Branch",      city:"DIFC",         scans:614,  watchRate:88, active:true,  qrUrl:"https://scenvy.app/l/l3", createdAt:"2025-12-01" },
-  { id:"l4", name:"Mall of Emirates", city:"Al Barsha",    scans:329,  watchRate:61, active:false, qrUrl:"https://scenvy.app/l/l4", createdAt:"2026-01-10" },
+  { id:"l1", name:"Marina Walk",      city:"Dubai Marina", scans:1247, watchRate:94, active:true,  qrUrl:"https://app.scenvy.de/l/l1", createdAt:"2025-11-01" },
+  { id:"l2", name:"JBR Terrace",      city:"JBR Beach",    scans:893,  watchRate:78, active:true,  qrUrl:"https://app.scenvy.de/l/l2", createdAt:"2025-11-15" },
+  { id:"l3", name:"DIFC Branch",      city:"DIFC",         scans:614,  watchRate:88, active:true,  qrUrl:"https://app.scenvy.de/l/l3", createdAt:"2025-12-01" },
+  { id:"l4", name:"Mall of Emirates", city:"Al Barsha",    scans:329,  watchRate:61, active:false, qrUrl:"https://app.scenvy.de/l/l4", createdAt:"2026-01-10" },
 ]
 
 export default function handler(req, res) {
@@ -29,7 +29,7 @@ export default function handler(req, res) {
       const newLoc = {
         id, name, city: city || 'Dubai',
         scans: 0, watchRate: 0, active: true,
-        qrUrl: `https://scenvy.app/l/${id}`,
+        qrUrl: `https://app.scenvy.de/l/${id}`,
         createdAt: new Date().toISOString()
       }
       locations.push(newLoc)

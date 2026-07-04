@@ -131,7 +131,7 @@ export default function GuestView() {
 
       {/* Powered by */}
       <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', fontSize: 10, color: 'rgba(255,255,255,.3)', whiteSpace: 'nowrap' }}>
-        Powered by SCENVY · scenvy.app
+        Powered by SCENVY · app.scenvy.de
       </div>
     </div>
   )

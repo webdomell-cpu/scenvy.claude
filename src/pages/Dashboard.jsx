@@ -265,7 +265,7 @@ function Locations({ locs, setLocs, notify }) {
               </div>
               <div style={{ fontSize: 12, color: C.muted, marginBottom: 9 }}>📍 {l.city}</div>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: C.card2, borderRadius: 7, fontSize: 11, color: C.muted }}>
-                🔗 scenvy.app/l/{l.id}
+                🔗 app.scenvy.de/l/{l.id}
                 <Copy size={11} color={C.purple} style={{ cursor: 'pointer' }} onClick={() => notify('URL copied!')} />
               </div>
             </div>
@@ -467,7 +467,7 @@ export default function Dashboard() {
         <div style={{ height: 58, borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', padding: '0 28px', justifyContent: 'space-between', flexShrink: 0 }}>
           <div style={{ fontWeight: 700, fontSize: 14 }}>Marina Group Dashboard</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ fontSize: 12, color: C.muted }}>scenvy.app</div>
+            <div style={{ fontSize: 12, color: C.muted }}>app.scenvy.de</div>
             <div style={{ width: 30, height: 30, borderRadius: '50%', background: grad(C.purple, C.pink), display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>M</div>
           </div>
         </div>

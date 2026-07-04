@@ -5,8 +5,8 @@ import { Eye, EyeOff } from 'lucide-react'
 
 // Demo accounts — replace with real auth (Clerk, Firebase, Supabase, etc.)
 const DEMO_ACCOUNTS = [
-  { email: 'admin@scenvy.app',     password: 'admin123',  role: 'admin',  name: 'Dominik' },
-  { email: 'venue@scenvy.app',     password: 'venue123',  role: 'tenant', name: 'Marina Group' },
+  { email: 'admin@scenvy.de',     password: 'admin123',  role: 'admin',  name: 'Dominik' },
+  { email: 'venue@scenvy.de',     password: 'venue123',  role: 'tenant', name: 'Marina Group' },
 ]
 
 export default function Login() {
@@ -54,8 +54,8 @@ export default function Login() {
           {/* Demo hint */}
           <div style={{ background: `${C.purple}18`, border: `1px solid ${C.purple}44`, borderRadius: 10, padding: '10px 14px', marginBottom: 24 }}>
             <div style={{ fontSize: 11, color: C.purple, fontWeight: 700, marginBottom: 4 }}>DEMO ACCOUNTS</div>
-            <div style={{ fontSize: 12, color: C.muted }}>Admin: admin@scenvy.app / admin123</div>
-            <div style={{ fontSize: 12, color: C.muted }}>Venue: venue@scenvy.app / venue123</div>
+            <div style={{ fontSize: 12, color: C.muted }}>Admin: admin@scenvy.de / admin123</div>
+            <div style={{ fontSize: 12, color: C.muted }}>Venue: venue@scenvy.de / venue123</div>
           </div>
 
           {/* Email */}
@@ -103,7 +103,7 @@ export default function Login() {
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <span onClick={() => nav('/')} style={{ fontSize: 13, color: C.muted, cursor: 'pointer' }}>← Back to scenvy.app</span>
+          <span onClick={() => nav('/')} style={{ fontSize: 13, color: C.muted, cursor: 'pointer' }}>← Back to app.scenvy.de</span>
         </div>
       </div>
     </div>

@@ -277,7 +277,7 @@ function Features() {
     { icon: <Sparkles size={24} color={C.blue} />,    title: 'AI Generator',        desc: 'Type your offer, Claude AI creates a complete reel — hook, copy, CTA, hashtags. No design skills needed.', color: C.blue },
     { icon: <MapPin size={24} color={C.green} />,     title: 'Multi-Location',      desc: 'Manage all your venues from one dashboard. Each location gets its own QR code and reel feed.', color: C.green },
     { icon: <BarChart2 size={24} color={C.orange} />, title: 'Analytics',           desc: 'Track scans, watch time, and CTA click-through rates. Know exactly which content drives revenue.', color: C.orange },
-    { icon: <QrCode size={24} color={C.purple} />,    title: 'QR Code System',      desc: 'Every location gets a unique QR — scenvy.app/l/{id}. Print it, display it, and start scanning in minutes.', color: C.purple },
+    { icon: <QrCode size={24} color={C.purple} />,    title: 'QR Code System',      desc: 'Every location gets a unique QR — app.scenvy.de/l/{id}. Print it, display it, and start scanning in minutes.', color: C.purple },
   ]
 
   return (
@@ -597,7 +597,7 @@ function Footer() {
             <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.65, marginBottom: 20 }}>
               Turn every place into a scrollable experience. The reel platform for hospitality.
             </p>
-            <div style={{ fontSize: 12, color: C.dim }}>scenvy.app</div>
+            <div style={{ fontSize: 12, color: C.dim }}>app.scenvy.de</div>
           </div>
 
           {cols.map(col => (
