@@ -1,66 +1,72 @@
-# SCENVY — Full Platform
+# SCENVY — Full Platform v2.0
+**app.scenvy.de**
 
-Turn every place into a scrollable experience.
+## Was ist drin
 
-## Routes
+| Seite | URL | Beschreibung |
+|-------|-----|-------------|
+| Landing Page | `/` | Marketing-Seite, zweisprachig DE/EN |
+| Login / Register | `/login` | Einloggen + neuen Account erstellen |
+| Guest Reel Experience | `/l/:id` | TikTok-style Reel Viewer |
+| CMS Dashboard | `/dashboard` | Reel-Verwaltung, Upload, Analytics |
+| Super Admin | `/admin` | Alle Tenants, MRR, Feature-Flags |
 
-| URL                    | What it shows              |
-|------------------------|---------------------------|
-| `/`                    | Landing page               |
-| `/login`               | Login (demo accounts below)|
-| `/dashboard`           | CMS Dashboard              |
-| `/admin`               | Super Admin Panel          |
-| `/l/:locationId`       | Guest Reel Experience      |
-
-## Demo Accounts
-
-| Email                 | Password   | Role        |
-|-----------------------|------------|-------------|
-| admin@scenvy.de      | admin123   | Super Admin |
-| venue@scenvy.de      | venue123   | Tenant CMS  |
+## Demo-Zugänge
+| Email | Passwort | Rolle |
+|-------|----------|-------|
+| admin@scenvy.de | admin123 | Super Admin |
+| venue@scenvy.de | venue123 | Tenant CMS |
 
 ## API Endpoints
+| Methode | URL | Beschreibung |
+|---------|-----|-------------|
+| GET/POST | /api/reels | Reels lesen/erstellen |
+| PUT/DELETE | /api/reels | Reel aktualisieren/löschen |
+| GET/POST | /api/locations | Standorte |
+| GET/POST | /api/tenants | Tenants (Admin) |
+| GET | /api/analytics | Analytics-Daten |
+| POST | /api/ai/generate | Claude KI-Reel-Generator |
 
-| Method | URL                  | Description              |
-|--------|----------------------|--------------------------|
-| GET    | /api/reels           | List all reels           |
-| POST   | /api/reels           | Create a reel            |
-| PUT    | /api/reels           | Update a reel            |
-| DELETE | /api/reels?id=xxx    | Delete a reel            |
-| GET    | /api/locations       | List all locations       |
-| POST   | /api/locations       | Create a location        |
-| GET    | /api/tenants         | List all tenants (admin) |
-| GET    | /api/analytics       | Get analytics data       |
-| POST   | /api/ai/generate     | AI reel generation       |
-
-## Setup
+## Deploy zu Vercel
 
 ```bash
+# ZIP entpacken
+unzip scenvy-full.zip
+cd scenvy-full
+
+# Dependencies installieren
 npm install
-npm run dev         # Local dev at localhost:5173
-```
 
-## Deploy to Vercel
+# Lokal testen
+npm run dev
 
-```bash
+# Deployen
 npm install -g vercel
-vercel              # Follow prompts
+vercel
 ```
 
-## AI Generator Setup (optional)
-
-1. Get your API key at console.anthropic.com
-2. Vercel Dashboard → Project → Settings → Environment Variables
-3. Add: `ANTHROPIC_API_KEY` = your key
+## KI-Generator aktivieren
+1. API-Key holen: console.anthropic.com
+2. Vercel Dashboard → Projekt → Settings → Environment Variables
+3. `ANTHROPIC_API_KEY` = dein Key
 4. Redeploy
 
-## Production Checklist
+## Neue Features in v2.0
+- ✅ Zweisprachige Landing Page (DE/EN) mit Flaggen-Umschalter
+- ✅ Echte Bilder in animierten Phone-Mockups
+- ✅ Registrierung funktioniert ("Kostenlos starten")
+- ✅ Demo-Zugangsdaten auf Login-Seite versteckt
+- ✅ Foto/Video Upload für Reels
+- ✅ CTA-Link & Aktion pro Reel konfigurierbar
+- ✅ KI-Generator: Bild hochladen + beschreiben
+- ✅ Reel-Vorschau vor dem Speichern
 
-- [ ] Replace localStorage auth with Clerk / Firebase / Supabase Auth
-- [ ] Replace in-memory API storage with Postgres / Supabase
-- [ ] Connect media uploads to Cloudflare Stream or AWS S3
-- [ ] Add ANTHROPIC_API_KEY to Vercel env vars
-- [ ] Set up a real domain in Vercel settings
+## Nächste Schritte für Produktion
+- [ ] Echte Datenbank: Supabase (kostenlos) oder PlanetScale
+- [ ] Media-Speicher: Cloudflare Stream oder AWS S3
+- [ ] Echte Auth: Clerk oder Supabase Auth
+- [ ] Domain in Vercel Settings: app.scenvy.de
+- [ ] ANTHROPIC_API_KEY in Vercel Environment Variables
 
 ---
 Built with React + Vite + Vercel · app.scenvy.de
