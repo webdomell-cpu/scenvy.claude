@@ -61,9 +61,9 @@ export function useSaveReel() {
         .from('reels')
         .upsert(payload)
         .select('*, locations(name)')
-        .single()
+        .maybeSingle()
       if (error) throw error
-      return normalizeReel(data)
+      return data ? normalizeReel(data) : null
     },
     onSuccess: (_d, { tenantId }) =>
       qc.invalidateQueries({ queryKey: ['reels', tenantId] }),
@@ -117,7 +117,7 @@ export function useSaveLocation() {
         .from('locations')
         .upsert(payload)
         .select()
-        .single()
+        .maybeSingle()
       if (error) throw error
       return data
     },
@@ -198,7 +198,7 @@ export function useUpdateTenant() {
         .update(updates)
         .eq('id', id)
         .select()
-        .single()
+        .maybeSingle()
       if (error) throw error
       return data
     },
