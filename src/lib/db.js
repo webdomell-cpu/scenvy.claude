@@ -180,8 +180,8 @@ export function useTenants() {
     queryKey: ['tenants'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('tenants')
-        .select('*, profiles(id, full_name, email, role)')
+        .from('tenants_with_counts')
+        .select('*')
         .order('created_at', { ascending: true })
       if (error) throw error
       return data || []

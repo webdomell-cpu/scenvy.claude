@@ -9,23 +9,30 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   const loadProfile = async (userId) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('*, tenants(id, name, plan, status)')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
+    if (error) {
+      setLoading(false)
+      return
+    }
     if (data) {
       setProfile(data)
       setUser({
         id:        data.id,
         email:     data.email,
         name:      data.full_name,
-        role:      data.role,           // 'admin' | 'tenant_owner' | 'tenant_member'
+        role:      data.role,
         tenant_id: data.tenant_id,
         tenant:    data.tenants,
         avatar:    data.avatar_url,
       })
+    } else {
+      setUser({ id: userId })
     }
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -34,14 +41,17 @@ export function AuthProvider({ children }) {
       else setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        await loadProfile(session.user.id)
-      } else {
-        setUser(null)
-        setProfile(null)
-      }
-      setLoading(false)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Wrap async work to avoid deadlock inside the sync callback
+      ;(async () => {
+        if (session?.user) {
+          await loadProfile(session.user.id)
+        } else {
+          setUser(null)
+          setProfile(null)
+          setLoading(false)
+        }
+      })()
     })
 
     return () => subscription.unsubscribe()
