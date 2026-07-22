@@ -13,6 +13,8 @@ function Protected({ children, adminOnly = false }) {
   const { user, loading } = useAuth()
   if (loading) return <Spinner />
   if (!user)   return <Navigate to="/auth" replace />
+  // If user exists but role isn't loaded yet, keep showing spinner
+  if (!user.role) return <Spinner />
   if (adminOnly && user.role !== 'admin') return <Navigate to="/dashboard" replace />
   if (!adminOnly && user.role === 'admin') return <Navigate to="/admin" replace />
   return children

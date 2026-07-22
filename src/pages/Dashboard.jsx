@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { C, grad } from '@/tokens'
 import { copyToClipboard, downloadQR, qrImageUrl } from '@/storage'
@@ -6,20 +6,17 @@ import { useAuth } from '@/lib/AuthContext'
 import {
   useReels, useSaveReel, useDeleteReel,
   useLocations, useSaveLocation, useDeleteLocation,
-  useAnalyticsSummary, uploadMedia
+  useAnalyticsSummary, uploadMedia,
+  useMedia, useSaveMedia, useDeleteMedia,
+  useTenant, useSaveTenantProfile
 } from '@/lib/db'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import {
-  Home, Film, MapPin, BarChart2, Sparkles, Settings, Menu,
-  QrCode, Eye, MousePointer, Video, Plus, Trash2, RefreshCw,
-  Copy, LogOut, Upload, Link, X, Image, ExternalLink, Edit2,
-  Download, Globe, Save, Mail, Shield
-} from 'lucide-react'
+import { Home, Film, MapPin, BarChart2, Sparkles, Settings, Menu, QrCode, Eye, MousePointer, Video, Plus, Trash2, RefreshCw, Copy, LogOut, Upload, Link, X, Image, ExternalLink, CreditCard as Edit2, Download, Globe, Save, Mail, Shield, Library, Building2, Phone } from 'lucide-react'
 
 // ── i18n ─────────────────────────────────────────────────
 const T = {
-  de:{ nav:{overview:'Übersicht',reels:'Reels',locations:'Standorte',analytics:'Analytics',ai:'KI-Generator',qr:'QR-Codes',settings:'Einstellungen'}, logout:'Abmelden', thisWeek:'diese Woche', active:'Aktiv', inactive:'Inaktiv', scans:'Scans', watchRate:'Watch Rate', deactivate:'Deaktivieren', activate:'Aktivieren', save:'Speichern', cancel:'Abbrechen', edit:'Bearbeiten', delete:'Löschen' },
-  en:{ nav:{overview:'Overview',reels:'Reels',locations:'Locations',analytics:'Analytics',ai:'AI Generator',qr:'QR Codes',settings:'Settings'}, logout:'Log out', thisWeek:'this week', active:'Active', inactive:'Inactive', scans:'Scans', watchRate:'Watch Rate', deactivate:'Deactivate', activate:'Activate', save:'Save', cancel:'Cancel', edit:'Edit', delete:'Delete' },
+  de:{ nav:{overview:'Übersicht',reels:'Reels',locations:'Standorte',analytics:'Analytics',ai:'KI-Generator',qr:'QR-Codes',media:'Mediathek',settings:'Einstellungen',company:'Firmendaten'}, logout:'Abmelden', thisWeek:'diese Woche', active:'Aktiv', inactive:'Inaktiv', scans:'Scans', watchRate:'Watch Rate', deactivate:'Deaktivieren', activate:'Aktivieren', save:'Speichern', cancel:'Abbrechen', edit:'Bearbeiten', delete:'Löschen' },
+  en:{ nav:{overview:'Overview',reels:'Reels',locations:'Locations',analytics:'Analytics',ai:'AI Generator',qr:'QR Codes',media:'Media Library',settings:'Settings',company:'Company Data'}, logout:'Log out', thisWeek:'this week', active:'Active', inactive:'Inactive', scans:'Scans', watchRate:'Watch Rate', deactivate:'Deactivate', activate:'Activate', save:'Save', cancel:'Cancel', edit:'Edit', delete:'Delete' },
 }
 
 const pill=(label,color)=>(<span style={{fontSize:10,fontWeight:700,padding:'3px 9px',borderRadius:20,background:`${color}28`,color,border:`1px solid ${color}44`}}>{label}</span>)
@@ -206,7 +203,8 @@ function LocationModal({ loc, tenantId, onClose, onSave }) {
 function Sidebar({ page, setPage, open, setOpen, t, user, logout }) {
   const items = [
     {id:'overview',icon:<Home size={17}/>},{id:'reels',icon:<Film size={17}/>},{id:'locations',icon:<MapPin size={17}/>},
-    {id:'analytics',icon:<BarChart2 size={17}/>},{id:'ai',icon:<Sparkles size={17}/>,badge:'✨'},{id:'qr',icon:<QrCode size={17}/>},{id:'settings',icon:<Settings size={17}/>},
+    {id:'analytics',icon:<BarChart2 size={17}/>},{id:'ai',icon:<Sparkles size={17}/>,badge:'✨'},{id:'qr',icon:<QrCode size={17}/>},
+    {id:'media',icon:<Library size={17}/>},{id:'company',icon:<Building2 size={17}/>},{id:'settings',icon:<Settings size={17}/>},
   ]
   return (
     <div style={{width:open?220:58,background:C.card,borderRight:`1px solid ${C.border}`,flexShrink:0,display:'flex',flexDirection:'column',transition:'width .3s',overflow:'hidden'}}>
@@ -658,6 +656,157 @@ function AIGenerator({ tenantId, locs, notify }) {
   )
 }
 
+// ── Media Library Page ────────────────────────────────────
+function MediaLibraryPage({ tenantId, notify }) {
+  const { data: media=[], isLoading } = useMedia(tenantId)
+  const saveMedia = useSaveMedia()
+  const deleteMedia = useDeleteMedia()
+  const fileRef = useRef(null)
+
+  const handleUpload = async (e) => {
+    const files = Array.from(e.target.files||[])
+    if (!files.length) return
+    for (const f of files) {
+      try {
+        const url = await uploadMedia(f, tenantId)
+        await saveMedia.mutateAsync({ media:{ url, type:f.type?.startsWith('video')?'video':'image', name:f.name, size:f.size }, tenantId })
+      } catch(err) { notify('❌ ' + err.message) }
+    }
+    notify('✅ Upload erfolgreich')
+    if (fileRef.current) fileRef.current.value = ''
+  }
+
+  const handleDelete = async (m) => {
+    try { await deleteMedia.mutateAsync({ id:m.id, tenantId }); notify('Gelöscht') }
+    catch(e) { notify('❌ ' + e.message) }
+  }
+
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
+        <div>
+          <div style={{fontSize:11,color:C.pink,fontWeight:700,letterSpacing:2,marginBottom:6}}>MEDIA</div>
+          <div style={{fontSize:24,fontWeight:800}}>Mediathek</div>
+        </div>
+        <button onClick={()=>fileRef.current?.click()} style={{display:'flex',alignItems:'center',gap:8,padding:'10px 20px',borderRadius:10,border:'none',background:grad(C.purple,C.pink),color:C.white,cursor:'pointer',fontWeight:700,fontSize:14,fontFamily:'inherit'}}>
+          <Upload size={16}/> Upload
+        </button>
+        <input ref={fileRef} type="file" accept="image/*,video/*" multiple onChange={handleUpload} style={{display:'none'}}/>
+      </div>
+
+      {isLoading ? (
+        <div style={{padding:40,textAlign:'center',color:C.muted}}>Lade Mediathek...</div>
+      ) : media.length === 0 ? (
+        <div style={{padding:60,textAlign:'center',background:C.card,borderRadius:16,border:`1px solid ${C.border}`}}>
+          <Library size={40} color={C.muted} style={{marginBottom:12}}/>
+          <div style={{fontSize:14,color:C.muted}}>Noch keine Medien. Lade Bilder oder Videos hoch.</div>
+        </div>
+      ) : (
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:14}}>
+          {media.map(m=>(
+            <div key={m.id} style={{background:C.card,borderRadius:12,overflow:'hidden',border:`1px solid ${C.border}`,position:'relative'}}>
+              {m.type==='video' ? (
+                <video src={m.url} style={{width:'100%',height:140,objectFit:'cover'}} muted/>
+              ) : (
+                <img src={m.url} style={{width:'100%',height:140,objectFit:'cover'}} alt={m.name||''}/>
+              )}
+              <div style={{padding:10}}>
+                <div style={{fontSize:11,color:C.muted,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{m.name||'Unbenannt'}</div>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:6}}>
+                  <span style={{fontSize:10,color:C.dim}}>{m.size?`${(m.size/1024/1024).toFixed(1)} MB`:''}</span>
+                  <button onClick={()=>handleDelete(m)} style={{background:'none',border:'none',color:C.pink,cursor:'pointer',padding:4}}><Trash2 size={14}/></button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Company Settings Page ─────────────────────────────────
+function CompanySettingsPage({ tenantId, notify }) {
+  const { data: tenant, isLoading } = useTenant(tenantId)
+  const saveTenant = useSaveTenantProfile()
+  const [form, setForm] = useState(null)
+
+  useEffect(() => { if (tenant && !form) setForm({
+    company_name: tenant.company_name||tenant.name||'',
+    company_address: tenant.company_address||'',
+    company_zip: tenant.company_zip||'',
+    company_city: tenant.company_city||'',
+    company_country: tenant.company_country||'DE',
+    contact_name: tenant.contact_name||'',
+    contact_email: tenant.contact_email||'',
+    contact_phone: tenant.contact_phone||'',
+    vat_id: tenant.vat_id||'',
+    website: tenant.website||'',
+  })}, [tenant, form])
+
+  if (isLoading || !form) return <div style={{padding:40,textAlign:'center',color:C.muted}}>Lade Firmendaten...</div>
+
+  const setF = (k,v) => setForm(f=>({...f,[k]:v}))
+  const save = async () => {
+    try { await saveTenant.mutateAsync({ id:tenantId, updates:form }); notify('✅ Firmendaten gespeichert') }
+    catch(e) { notify('❌ ' + e.message) }
+  }
+
+  const input = (label, key, placeholder, type='text', icon) => (
+    <div>
+      <label style={{fontSize:11,color:C.muted,display:'block',marginBottom:6,fontWeight:600,letterSpacing:1}}>{label}</label>
+      <div style={{position:'relative'}}>
+        {icon&&<span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',display:'flex'}}>{icon}</span>}
+        <input value={form[key]} onChange={e=>setF(key,e.target.value)} placeholder={placeholder} type={type}
+          style={{width:'100%',padding:`11px 14px ${icon?'11px 34px':'11px 14px'}`,borderRadius:9,border:`1px solid ${C.border}`,background:C.bg,color:C.white,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{maxWidth:700}}>
+      <div style={{marginBottom:24}}>
+        <div style={{fontSize:11,color:C.pink,fontWeight:700,letterSpacing:2,marginBottom:6}}>COMPANY</div>
+        <div style={{fontSize:24,fontWeight:800}}>Firmendaten</div>
+        <div style={{fontSize:13,color:C.muted,marginTop:4}}>Verwalte deine Unternehmensdaten für Rechnungen und Kontakt</div>
+      </div>
+
+      <div style={{background:C.card,borderRadius:16,padding:24,border:`1px solid ${C.border}`,marginBottom:16}}>
+        <div style={{fontSize:14,fontWeight:700,marginBottom:18}}>Unternehmen</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+          {input('FIRMENNAME *','company_name','Mein Restaurant GmbH')}
+          {input('WEBSITE','website','www.mein-restaurant.de')}
+          {input('STRASSE & NR.','company_address','Musterstr. 1')}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
+            {input('PLZ','company_zip','12345')}
+            {input('STADT','company_city','Berlin')}
+            {input('LAND','company_country','DE')}
+          </div>
+        </div>
+      </div>
+
+      <div style={{background:C.card,borderRadius:16,padding:24,border:`1px solid ${C.border}`,marginBottom:16}}>
+        <div style={{fontSize:14,fontWeight:700,marginBottom:18}}>Kontaktperson</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16}}>
+          {input('NAME','contact_name','Max Mustermann')}
+          {input('E-MAIL','contact_email','kontakt@firma.de','email',<Mail size={14} color={C.muted}/>)}
+          {input('TELEFON','contact_phone','+49 123 456789','tel',<Phone size={14} color={C.muted}/>)}
+        </div>
+      </div>
+
+      <div style={{background:C.card,borderRadius:16,padding:24,border:`1px solid ${C.border}`,marginBottom:24}}>
+        <div style={{fontSize:14,fontWeight:700,marginBottom:18}}>Steuer</div>
+        {input('UST-ID','vat_id','DE123456789')}
+      </div>
+
+      <button onClick={save} disabled={saveTenant.isPending}
+        style={{display:'flex',alignItems:'center',gap:8,padding:'12px 28px',borderRadius:10,border:'none',background:grad(C.purple,C.pink),color:C.white,cursor:saveTenant.isPending?'wait':'pointer',fontWeight:700,fontSize:14,fontFamily:'inherit'}}>
+        <Save size={16}/> {saveTenant.isPending?'Speichert...':'Firmendaten speichern'}
+      </button>
+    </div>
+  )
+}
+
 // ── Main Dashboard ────────────────────────────────────────
 export default function Dashboard() {
   const { user, logout } = useAuth()
@@ -711,6 +860,8 @@ export default function Dashboard() {
           {page==='analytics' && <Analytics  tenantId={tenantId}/>}
           {page==='ai'        && <AIGenerator tenantId={tenantId} locs={locs} notify={notify}/>}
           {page==='qr'        && <QRPage     locs={locs} notify={notify}/>}
+          {page==='media'     && <MediaLibraryPage tenantId={tenantId} notify={notify}/>}
+          {page==='company'   && <CompanySettingsPage tenantId={tenantId} notify={notify}/>}
           {page==='settings'  && (
             <div>
               <div style={{fontSize:11,color:C.pink,fontWeight:700,letterSpacing:2,marginBottom:16}}>ACCOUNT</div>

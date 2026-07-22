@@ -221,33 +221,126 @@ export async function uploadMedia(file, tenantId) {
 // ════════════════════════════════════════════════════════
 // ADMIN SETTINGS
 // ════════════════════════════════════════════════════════
-export function useAdminSettings() {
+// ════════════════════════════════════════════════════════
+// MEDIA LIBRARY
+// ════════════════════════════════════════════════════════
+export function useMedia(tenantId) {
   return useQuery({
-    queryKey: ['admin_settings'],
+    queryKey: ['media', tenantId],
+    enabled: !!tenantId,
     queryFn: async () => {
-      const { data } = await supabase
-        .from('tenants')
-        .select('settings')
-        .eq('name', '__platform__')
+      let q = supabase.from('media').select('*')
+      if (tenantId !== 'ALL') q = q.eq('tenant_id', tenantId)
+      const { data, error } = await q.order('created_at', { ascending: false })
+      if (error) throw error
+      return data || []
+    },
+  })
+}
+
+export function useSaveMedia() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ media, tenantId }) => {
+      const { data, error } = await supabase
+        .from('media')
+        .insert({ ...media, tenant_id: tenantId })
+        .select()
         .maybeSingle()
-      return data?.settings || {}
+      if (error) throw error
+      return data
+    },
+    onSuccess: (_d, { tenantId }) =>
+      qc.invalidateQueries({ queryKey: ['media', tenantId] }),
+  })
+}
+
+export function useDeleteMedia() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, tenantId }) => {
+      const { error } = await supabase.from('media').delete().eq('id', id)
+      if (error) throw error
+      return tenantId
+    },
+    onSuccess: (tenantId) =>
+      qc.invalidateQueries({ queryKey: ['media', tenantId] }),
+  })
+}
+
+// ════════════════════════════════════════════════════════
+// TENANT PROFILE (company data)
+// ════════════════════════════════════════════════════════
+export function useTenant(tenantId) {
+  return useQuery({
+    queryKey: ['tenant', tenantId],
+    enabled: !!tenantId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tenants')
+        .select('*')
+        .eq('id', tenantId)
+        .maybeSingle()
+      if (error) throw error
+      return data
+    },
+  })
+}
+
+export function useSaveTenantProfile() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, updates }) => {
+      const { data, error } = await supabase
+        .from('tenants')
+        .update(updates)
+        .eq('id', id)
+        .select('*')
+        .maybeSingle()
+      if (error) throw error
+      return data
+    },
+    onSuccess: (_d, { id }) => {
+      qc.invalidateQueries({ queryKey: ['tenant', id] })
+      qc.invalidateQueries({ queryKey: ['tenants'] })
+    },
+  })
+}
+
+// ════════════════════════════════════════════════════════
+// PLATFORM CONFIG (admin)
+// ════════════════════════════════════════════════════════
+export function usePlatformConfig() {
+  return useQuery({
+    queryKey: ['platform_config'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tenants')
+        .select('platform_config')
+        .not('platform_config', 'eq', '{}')
+        .limit(1)
+        .maybeSingle()
+      if (error) return {}
+      return data?.platform_config || {}
     },
     retry: false,
   })
 }
 
-export function useSaveAdminSettings() {
+export function useSavePlatformConfig() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (settings) => {
-      // Store in Supabase as platform config
-      const { error } = await supabase.rpc('upsert_platform_settings', { p_settings: settings })
+    mutationFn: async (config) => {
+      const { error } = await supabase
+        .from('tenants')
+        .update({ platform_config: config })
+        .is('tenant_id', 'null')
+        .in('name', ['__platform__', 'SCENVY Platform'])
       if (error) {
-        // Fallback: store locally in profiles metadata
-        localStorage.setItem('scenvy_admin_settings', JSON.stringify(settings))
+        localStorage.setItem('scenvy_platform_config', JSON.stringify(config))
       }
-      return settings
+      return config
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin_settings'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['platform_config'] }),
   })
 }
