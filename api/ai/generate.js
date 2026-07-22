@@ -9,16 +9,36 @@ export default async function handler(req, res) {
   if (!offer) return res.status(400).json({ error: 'offer is required' })
 
   const apiKey = process.env.ANTHROPIC_API_KEY
+
+  // Build search query for stock photos
+  const queryWords = [venue, offer, type].filter(Boolean).join(' ')
+  const searchQuery = queryWords.slice(0, 60) || 'cocktail bar nightlife'
+
+  // Fetch a matching stock photo from Pexels
+  let imageUrl = null
+  try {
+    const pexRes = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(searchQuery)}&per_page=1&orientation=portrait`, {
+      headers: { Authorization: process.env.PEXELS_API_KEY || '' }
+    })
+    if (pexRes.ok) {
+      const pexData = await pexRes.json()
+      if (pexData.photos?.[0]) {
+        imageUrl = pexData.photos[0].src?.large2x || pexData.photos[0].src?.large || pexData.photos[0].src?.original
+      }
+    }
+  } catch { /* Pexels is optional — fall back to no image */ }
+
   if (!apiKey) {
     return res.status(200).json({
       hook: 'TONIGHT ONLY 🔥',
       headline: offer.length > 50 ? offer.slice(0, 50) + '…' : offer,
-      subtext: `Available at ${venue || 'your venue'} — don\'t miss out.`,
+      subtext: `Available at ${venue || 'your venue'} — don't miss out.`,
       cta: 'Grab It Now',
       hashtags: ['dubai', type || 'offer', 'scenvy'],
       emoji: type === 'event' ? '🎉' : type === 'menu' ? '🍽️' : '🍹',
       urgency: 'Limited time only',
       colorMood: 'purple',
+      imageUrl,
       _note: 'Add ANTHROPIC_API_KEY in Vercel env vars for real AI generation'
     })
   }
@@ -54,18 +74,19 @@ Reply ONLY with compact valid JSON (no markdown, no explanation):
     if (!response.ok) throw new Error(data.error?.message || 'Claude API error')
     const text = data.content?.[0]?.text || ''
     const parsed = JSON.parse(text.replace(/```json|```/g, '').trim())
-    return res.status(200).json(parsed)
+    return res.status(200).json({ ...parsed, imageUrl })
   } catch (err) {
     console.error('AI generate error:', err)
     return res.status(200).json({
       hook: 'TONIGHT ONLY 🔥',
       headline: offer,
-      subtext: `Don\'t miss out at ${venue || 'your venue'}.`,
+      subtext: `Don't miss out at ${venue || 'your venue'}.`,
       cta: 'See More',
       hashtags: ['dubai', 'scenvy'],
       emoji: '✨',
       urgency: '',
-      colorMood: 'purple'
+      colorMood: 'purple',
+      imageUrl
     })
   }
 }

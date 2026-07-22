@@ -47,8 +47,12 @@ export default function ScenvyAuth() {
 
   const doLogin = async () => {
     setError(''); setLoading(true)
-    const { error:e } = await supabase.auth.signInWithPassword({ email, password:pw })
+    const { data, error:e } = await supabase.auth.signInWithPassword({ email, password:pw })
     if (e) setError(de?'E-Mail oder Passwort falsch.':'Invalid email or password.')
+    else {
+      const { data: prof } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle()
+      nav(prof?.role === 'admin' ? '/admin' : '/dashboard')
+    }
     setLoading(false)
   }
 

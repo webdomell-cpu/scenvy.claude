@@ -543,7 +543,9 @@ function AIGenerator({ tenantId, locs, notify }) {
     setLoading(true); setResult(null)
     try {
       const res = await fetch('/api/ai/generate', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ ...form, venue:loc?.name||form.venue, offer:offerText }) })
-      setResult(await res.json())
+      const data = await res.json()
+      if (data.imageUrl && !imgPreview) setImgPreview(data.imageUrl)
+      setResult(data)
     } catch {
       const moodMap={offer:'purple',event:'pink',menu:'blue',promo:'orange'}
       setResult({ hook:'TONIGHT ONLY 🔥', headline:offerText.length>40?offerText.slice(0,40)+'…':offerText, subtext:'Exklusiv für dich — jetzt sichern!', cta:'Jetzt sichern', hashtags:['dubai',form.type,'scenvy'], emoji:'🍹', urgency:'Nur für begrenzte Zeit', colorMood:moodMap[form.type]||'purple' })
@@ -625,20 +627,24 @@ function AIGenerator({ tenantId, locs, notify }) {
                <Sparkles size={44} color={C.dim} style={{marginBottom:16}}/><div style={{fontSize:16,fontWeight:600,color:C.muted}}>Vorschau erscheint hier</div>
              </div>
             :<div>
-               <div style={{background:`linear-gradient(160deg,${accent}28,${C.bg} 70%)`,border:`2px solid ${accent}44`,borderRadius:22,padding:24,marginBottom:14}}>
-                 {imgPreview&&<img src={imgPreview} style={{width:'100%',borderRadius:14,maxHeight:140,objectFit:'cover',marginBottom:14}} alt=""/>}
-                 <div style={{background:`linear-gradient(180deg,${accent}33,${C.bg})`,borderRadius:16,padding:'24px 20px',textAlign:'center',marginBottom:14,display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:200}}>
-                   <div style={{fontSize:40}}>{result.emoji}</div>
-                   <div>
-                     <div style={{fontSize:12,fontWeight:800,color:accent,letterSpacing:2,marginBottom:7}}>{result.hook}</div>
-                     <div style={{fontSize:18,fontWeight:800,lineHeight:1.28,marginBottom:9}}>{result.headline}</div>
-                     <div style={{fontSize:13,color:'rgba(255,255,255,.6)',marginBottom:10}}>{result.subtext}</div>
-                     {result.urgency&&<div style={{fontSize:12,color:accent,fontWeight:600}}>⏱ {result.urgency}</div>}
+               <div style={{background:`linear-gradient(160deg,${accent}28,${C.bg} 70%)`,border:`2px solid ${accent}44`,borderRadius:22,padding:24,marginBottom:14,animation:'fadeUp .3s ease'}}>
+                 {imgPreview&&<div style={{position:'relative',borderRadius:14,overflow:'hidden',marginBottom:14,maxHeight:200}}>
+                   <img src={imgPreview} style={{width:'100%',maxHeight:200,objectFit:'cover',display:'block'}} alt=""/>
+                   <div style={{position:'absolute',inset:0,background:`linear-gradient(180deg,transparent 40%,${C.bg} 100%)`}}/>
+                 </div>}
+                 <div style={{background:`linear-gradient(180deg,${accent}33,${C.bg})`,borderRadius:16,padding:'24px 20px',textAlign:'center',marginBottom:14,display:'flex',flexDirection:'column',justifyContent:'space-between',minHeight:200,position:'relative',overflow:'hidden'}}>
+                   <div style={{position:'absolute',inset:0,background:`linear-gradient(90deg,transparent,${accent}11,transparent)`,backgroundSize:'200% 100%',animation:'shimmer 3s linear infinite'}}/>
+                   <div style={{fontSize:40,animation:'pulse 2s ease-in-out infinite',position:'relative'}}>{result.emoji}</div>
+                   <div style={{position:'relative'}}>
+                     <div style={{fontSize:12,fontWeight:800,color:accent,letterSpacing:2,marginBottom:7,animation:'slideIn .4s ease'}}>{result.hook}</div>
+                     <div style={{fontSize:18,fontWeight:800,lineHeight:1.28,marginBottom:9,animation:'slideIn .5s ease'}}>{result.headline}</div>
+                     <div style={{fontSize:13,color:'rgba(255,255,255,.6)',marginBottom:10,animation:'slideIn .6s ease'}}>{result.subtext}</div>
+                     {result.urgency&&<div style={{fontSize:12,color:accent,fontWeight:600,animation:'slideIn .7s ease'}}>⏱ {result.urgency}</div>}
                      {form.ctaUrl&&<div style={{fontSize:10,color:C.blue,marginTop:6,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}><ExternalLink size={9}/>{form.ctaUrl}</div>}
                    </div>
-                   <button style={{padding:'11px 28px',borderRadius:13,border:'none',background:accent,color:C.white,fontWeight:700,fontSize:15}}>{result.cta} →</button>
+                   <button style={{padding:'11px 28px',borderRadius:13,border:'none',background:accent,color:C.white,fontWeight:700,fontSize:15,position:'relative',transition:'transform .2s',cursor:'pointer'}} onMouseEnter={e=>e.currentTarget.style.transform='scale(1.05)'} onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>{result.cta} →</button>
                  </div>
-                 <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>{result.hashtags?.map(h=><span key={h} style={{fontSize:11,color:accent,background:`${accent}22`,padding:'3px 9px',borderRadius:7}}>#{h}</span>)}</div>
+                 <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>{result.hashtags?.map((h,i)=><span key={h} style={{fontSize:11,color:accent,background:`${accent}22`,padding:'3px 9px',borderRadius:7,animation:`slideIn ${.3+i*.1}s ease`}}>#{h}</span>)}</div>
                </div>
                <div style={{display:'flex',gap:10}}>
                  <button onClick={save} style={{flex:1,padding:'12px 0',borderRadius:10,border:'none',cursor:'pointer',background:accent,color:C.white,fontWeight:700,fontSize:14,fontFamily:'inherit'}}>✓ In Library speichern</button>
@@ -677,7 +683,7 @@ export default function Dashboard() {
 
   return (
     <div style={{display:'flex',height:'100vh',background:C.bg,fontFamily:"'Inter',sans-serif",color:C.white}}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}`}</style>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}} @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}} @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}} @keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:none}}`}</style>
 
       <Sidebar page={page} setPage={setPage} open={open} setOpen={setOpen} t={t} user={user} logout={logout}/>
 

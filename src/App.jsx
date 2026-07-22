@@ -14,6 +14,7 @@ function Protected({ children, adminOnly = false }) {
   if (loading) return <Spinner />
   if (!user)   return <Navigate to="/auth" replace />
   if (adminOnly && user.role !== 'admin') return <Navigate to="/dashboard" replace />
+  if (!adminOnly && user.role === 'admin') return <Navigate to="/admin" replace />
   return children
 }
 
