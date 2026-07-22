@@ -41,11 +41,9 @@ export function useReels(tenantId) {
     queryKey: ['reels', tenantId],
     enabled:  !!tenantId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('reels')
-        .select('*, locations(name)')
-        .eq('tenant_id', tenantId)
-        .order('created_at', { ascending: false })
+      let q = supabase.from('reels').select('*, locations(name)')
+      if (tenantId !== 'ALL') q = q.eq('tenant_id', tenantId)
+      const { data, error } = await q.order('created_at', { ascending: false })
       if (error) throw error
       return (data || []).map(normalizeReel)
     },
@@ -91,11 +89,9 @@ export function useLocations(tenantId) {
     queryKey: ['locations', tenantId],
     enabled:  !!tenantId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('locations')
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .order('created_at', { ascending: true })
+      let q = supabase.from('locations').select('*')
+      if (tenantId !== 'ALL') q = q.eq('tenant_id', tenantId)
+      const { data, error } = await q.order('created_at', { ascending: true })
       if (error) throw error
       return data || []
     },

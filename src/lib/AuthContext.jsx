@@ -36,15 +36,18 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
+    let mounted = true
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return
       if (session?.user) loadProfile(session.user.id)
       else setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      // Wrap async work to avoid deadlock inside the sync callback
       ;(async () => {
         if (session?.user) {
+          setLoading(true)
           await loadProfile(session.user.id)
         } else {
           setUser(null)
@@ -54,10 +57,17 @@ export function AuthProvider({ children }) {
       })()
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
-  const logout = () => supabase.auth.signOut()
+  const logout = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+    setProfile(null)
+  }
 
   return (
     <AuthContext.Provider value={{ user, profile, loading, logout }}>
