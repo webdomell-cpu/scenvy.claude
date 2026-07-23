@@ -21,7 +21,7 @@ create table if not exists profiles (
   tenant_id   uuid references tenants on delete set null,
   full_name   text,
   email       text,
-  role        text not null default 'tenant_owner' check (role in ('admin','tenant_owner','tenant_member')),
+  role        text not null default 'tenant_owner' check (role in ('admin','superadmin','tenant_owner','tenant_member')),
   avatar_url  text,
   created_at  timestamptz default now(),
   updated_at  timestamptz default now()
@@ -97,7 +97,7 @@ begin
   )
   returning id into new_tenant_id;
 
-  -- Create profile linked to tenant
+  -- Create profile linked to tenant (default role is tenant_owner)
   insert into profiles (id, tenant_id, full_name, email, role)
   values (
     new.id,
@@ -127,17 +127,25 @@ alter table scan_events enable row level security;
 create policy "tenants_own" on tenants for all
   using (id in (select tenant_id from profiles where id = auth.uid()));
 
--- Admins see all tenants
+-- Admins and superadmins see all tenants
 create policy "tenants_admin" on tenants for all
-  using ((select role from profiles where id = auth.uid()) = 'admin');
+  using ((select role from profiles where id = auth.uid()) in ('admin', 'superadmin'));
 
 -- Profiles: users see own profile
 create policy "profiles_own" on profiles for all
   using (id = auth.uid());
 
+-- Admins and superadmins see all profiles
+create policy "profiles_admin" on profiles for all
+  using ((select role from profiles where id = auth.uid()) in ('admin', 'superadmin'));
+
 -- Locations: tenant members see their locations
 create policy "locations_tenant" on locations for all
   using (tenant_id in (select tenant_id from profiles where id = auth.uid()));
+
+-- Locations: admins/superadmins see all locations
+create policy "locations_admin" on locations for all
+  using ((select role from profiles where id = auth.uid()) in ('admin', 'superadmin'));
 
 -- Locations: public read for active locations (guest view)
 create policy "locations_public_read" on locations for select
@@ -146,6 +154,10 @@ create policy "locations_public_read" on locations for select
 -- Reels: tenant members see their reels
 create policy "reels_tenant" on reels for all
   using (tenant_id in (select tenant_id from profiles where id = auth.uid()));
+
+-- Reels: admins/superadmins see all reels
+create policy "reels_admin" on reels for all
+  using ((select role from profiles where id = auth.uid()) in ('admin', 'superadmin'));
 
 -- Reels: public read for live reels (guest view)
 create policy "reels_public_live" on reels for select
@@ -156,6 +168,10 @@ create policy "scan_events_insert" on scan_events for insert
   with check (true);
 create policy "scan_events_tenant" on scan_events for select
   using (tenant_id in (select tenant_id from profiles where id = auth.uid()));
+
+-- Scan events: admins/superadmins see all scan events
+create policy "scan_events_admin" on scan_events for select
+  using ((select role from profiles where id = auth.uid()) in ('admin', 'superadmin'));
 
 -- ─── ADMIN VIEW: tenants with counts ─────────────────────
 create or replace view tenants_with_counts as
