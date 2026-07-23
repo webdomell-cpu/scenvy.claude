@@ -77,9 +77,16 @@ returns trigger as $$
 begin new.updated_at = now(); return new; end;
 $$ language plpgsql;
 
+drop trigger if exists tenants_updated_at on tenants;
 create trigger tenants_updated_at   before update on tenants   for each row execute function update_updated_at();
+
+drop trigger if exists profiles_updated_at on profiles;
 create trigger profiles_updated_at  before update on profiles  for each row execute function update_updated_at();
+
+drop trigger if exists locations_updated_at on locations;
 create trigger locations_updated_at before update on locations for each row execute function update_updated_at();
+
+drop trigger if exists reels_updated_at on reels;
 create trigger reels_updated_at     before update on reels     for each row execute function update_updated_at();
 
 -- ─── AUTO CREATE PROFILE ON SIGNUP ──────────────────────
@@ -122,6 +129,21 @@ alter table profiles   enable row level security;
 alter table locations  enable row level security;
 alter table reels      enable row level security;
 alter table scan_events enable row level security;
+
+-- Drop old policies if they exist
+drop policy if exists "tenants_own" on tenants;
+drop policy if exists "tenants_admin" on tenants;
+drop policy if exists "profiles_own" on profiles;
+drop policy if exists "profiles_admin" on profiles;
+drop policy if exists "locations_tenant" on locations;
+drop policy if exists "locations_admin" on locations;
+drop policy if exists "locations_public_read" on locations;
+drop policy if exists "reels_tenant" on reels;
+drop policy if exists "reels_admin" on reels;
+drop policy if exists "reels_public_live" on reels;
+drop policy if exists "scan_events_insert" on scan_events;
+drop policy if exists "scan_events_tenant" on scan_events;
+drop policy if exists "scan_events_admin" on scan_events;
 
 -- Tenants: users see only their own tenant
 create policy "tenants_own" on tenants for all
@@ -174,7 +196,8 @@ create policy "scan_events_admin" on scan_events for select
   using ((select role from profiles where id = auth.uid()) in ('admin', 'superadmin'));
 
 -- ─── ADMIN VIEW: tenants with counts ─────────────────────
-create or replace view tenants_with_counts as
+drop view if exists tenants_with_counts;
+create view tenants_with_counts as
 select
   t.*,
   count(distinct l.id) as locations_count,
