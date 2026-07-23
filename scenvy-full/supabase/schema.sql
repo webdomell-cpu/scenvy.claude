@@ -132,6 +132,20 @@ alter table reels disable row level security;
 alter table scan_events disable row level security;
 
 -- Drop all old policies
+drop policy if exists "profiles_select_own" on profiles;
+drop policy if exists "profiles_select_admin" on profiles;
+drop policy if exists "profiles_update_own" on profiles;
+drop policy if exists "tenants_select_own" on tenants;
+drop policy if exists "tenants_select_admin" on tenants;
+drop policy if exists "locations_select_tenant" on locations;
+drop policy if exists "locations_select_admin" on locations;
+drop policy if exists "locations_select_public" on locations;
+drop policy if exists "reels_select_tenant" on reels;
+drop policy if exists "reels_select_admin" on reels;
+drop policy if exists "reels_select_public" on reels;
+drop policy if exists "scan_events_insert_public" on scan_events;
+drop policy if exists "scan_events_select_tenant" on scan_events;
+drop policy if exists "scan_events_select_admin" on scan_events;
 drop policy if exists "tenants_own" on tenants;
 drop policy if exists "tenants_admin" on tenants;
 drop policy if exists "profiles_own" on profiles;
@@ -144,7 +158,6 @@ drop policy if exists "reels_admin" on reels;
 drop policy if exists "reels_public_live" on reels;
 drop policy if exists "scan_events_insert" on scan_events;
 drop policy if exists "scan_events_tenant" on scan_events;
-drop policy if exists "scan_events_admin" on scan_events;
 
 -- Enable RLS
 alter table tenants    enable row level security;
