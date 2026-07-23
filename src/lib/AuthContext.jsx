@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
   const loadProfile = async (userId) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('*, tenants(id, name, plan, status)')
+      .select('*')
       .eq('id', userId)
       .maybeSingle()
     if (error) {
@@ -19,6 +19,15 @@ export function AuthProvider({ children }) {
       return
     }
     if (data) {
+      let tenant = null
+      if (data.tenant_id) {
+        const { data: td } = await supabase
+          .from('tenants')
+          .select('id, name, plan, status')
+          .eq('id', data.tenant_id)
+          .maybeSingle()
+        tenant = td
+      }
       setProfile(data)
       setUser({
         id:        data.id,
@@ -26,7 +35,7 @@ export function AuthProvider({ children }) {
         name:      data.full_name,
         role:      data.role,
         tenant_id: data.tenant_id,
-        tenant:    data.tenants,
+        tenant:    tenant,
         avatar:    data.avatar_url,
       })
     } else {
