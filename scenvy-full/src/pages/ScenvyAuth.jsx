@@ -56,6 +56,9 @@ export default function ScenvyAuth() {
         return
       }
       
+      // Wait a moment for the session to be established
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
       // Benutzerrolle aus DB abrufen
       const { data: userData, error: dbError } = await supabase
         .from('profiles')
@@ -63,22 +66,35 @@ export default function ScenvyAuth() {
         .eq('id', data.user.id)
         .single()
       
-      if (dbError || !userData?.role) {
+      if (dbError) {
+        console.error('DB Error:', dbError)
         setError(de?'Benutzerrolle nicht gefunden.':'User role not found.')
         setLoading(false)
         return
       }
       
+      if (!userData?.role) {
+        setError(de?'Benutzerrolle nicht definiert.':'User role not defined.')
+        setLoading(false)
+        return
+      }
+      
+      // Log for debugging
+      console.log('Login success. User role:', userData.role)
+      
       // Weiterleitung basierend auf Rolle
       if (userData.role === 'admin' || userData.role === 'superadmin') {
-        nav('/admin')
+        console.log('Navigating to /admin')
+        nav('/admin', { replace: true })
       } else {
-        nav('/dashboard')
+        console.log('Navigating to /dashboard')
+        nav('/dashboard', { replace: true })
       }
     } catch (err) {
+      console.error('Login error:', err)
       setError(de?'Ein Fehler ist aufgetreten.':'An error occurred.')
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const doRegister = async () => {
