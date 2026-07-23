@@ -47,33 +47,70 @@ export default function ScenvyAuth() {
 
   const doLogin = async () => {
     setError(''); setLoading(true)
-    const { error:e } = await supabase.auth.signInWithPassword({ email, password:pw })
-    if (e) setError(de?'E-Mail oder Passwort falsch.':'Invalid email or password.')
+    try {
+      const { data, error: e } = await supabase.auth.signInWithPassword({ email, password:pw })
+      
+      if (e) {
+        setError(de?'E-Mail oder Passwort falsch.':'Invalid email or password.')
+        setLoading(false)
+        return
+      }
+      
+      // Benutzerrolle aus DB abrufen
+      const { data: userData, error: dbError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single()
+      
+      if (dbError || !userData?.role) {
+        setError(de?'Benutzerrolle nicht gefunden.':'User role not found.')
+        setLoading(false)
+        return
+      }
+      
+      // Weiterleitung basierend auf Rolle
+      if (userData.role === 'admin' || userData.role === 'superadmin') {
+        nav('/admin')
+      } else {
+        nav('/dashboard')
+      }
+    } catch (err) {
+      setError(de?'Ein Fehler ist aufgetreten.':'An error occurred.')
+    }
     setLoading(false)
   }
 
   const doRegister = async () => {
     setError(''); setLoading(true)
-    if (!name||!email||!pw) { setError(de?'Pflichtfelder ausfüllen.':'Fill required fields.'); setLoading(false); return }
-    if (pw!==pw2)           { setError(de?'Passwörter stimmen nicht überein.':'Passwords do not match.'); setLoading(false); return }
-    if (pw.length<8)        { setError(de?'Mindestens 8 Zeichen.':'Min. 8 characters.'); setLoading(false); return }
-    const { error:e } = await supabase.auth.signUp({
-      email, password:pw,
-      options:{ data:{ full_name:name, venue_name:venue||name }, emailRedirectTo:`${window.location.origin}/dashboard` }
-    })
-    if (e) setError(e.message); else setSent(true)
+    try {
+      if (!name||!email||!pw) { setError(de?'Pflichtfelder ausfüllen.':'Fill required fields.'); setLoading(false); return }
+      if (pw!==pw2)           { setError(de?'Passwörter stimmen nicht überein.':'Passwords do not match.'); setLoading(false); return }
+      if (pw.length<8)        { setError(de?'Mindestens 8 Zeichen.':'Min. 8 characters.'); setLoading(false); return }
+      const { error:e } = await supabase.auth.signUp({
+        email, password:pw,
+        options:{ data:{ full_name:name, venue_name:venue||name }, emailRedirectTo:`${window.location.origin}/dashboard` }
+      })
+      if (e) setError(e.message); else setSent(true)
+    } catch (err) {
+      setError(de?'Ein Fehler ist aufgetreten.':'An error occurred.')
+    }
     setLoading(false)
   }
 
   const doReset = async () => {
     setError(''); setLoading(true)
-    const { error:e } = await supabase.auth.resetPasswordForEmail(email, { redirectTo:`${window.location.origin}/auth?mode=reset` })
-    if (e) setError(e.message); else setSent(true)
+    try {
+      const { error:e } = await supabase.auth.resetPasswordForEmail(email, { redirectTo:`${window.location.origin}/auth?mode=reset` })
+      if (e) setError(e.message); else setSent(true)
+    } catch (err) {
+      setError(de?'Ein Fehler ist aufgetreten.':'An error occurred.')
+    }
     setLoading(false)
   }
 
   const SubmitBtn = ({ onClick, label }) => (
-    <button onClick={onClick} disabled={loading} style={{ width:'100%', padding:'13px 0', borderRadius:12, border:'none', cursor:loading?'wait':'pointer', background:loading?C.dim:grad(C.purple,C.pink), color:C.white, fontWeight:700, fontSize:15, fontFamily:'inherit', marginTop:6 }}>
+    <button onClick={onClick} disabled={loading} style={{ width:'100%', padding:'13px 0', borderRadius:12, border:'none', cursor:loading?'wait':'pointer', background:loading?C.dim:grad(C.purple,C.pink), color:C.white, fontSize:14, fontWeight:600, transition:'all 0.2s' }}>
       {loading?'...' : label}
     </button>
   )
@@ -97,7 +134,7 @@ export default function ScenvyAuth() {
             <div style={{ fontSize:14, color:C.muted, marginBottom:24 }}>
               {mode==='register' ? (de?'Bestätige deine E-Mail-Adresse.':'Confirm your email address.') : (de?'Prüfe deinen Posteingang.':'Check your inbox.')}
             </div>
-            <button onClick={()=>{setSent(false);setMode('login')}} style={{ padding:'11px 28px', borderRadius:12, border:'none', background:grad(C.purple,C.pink), color:C.white, cursor:'pointer', fontWeight:700, fontSize:14, fontFamily:'inherit' }}>
+            <button onClick={()=>{setSent(false);setMode('login')}} style={{ padding:'11px 28px', borderRadius:12, border:'none', background:grad(C.purple,C.pink), color:C.white, cursor:'pointer', fontSize:13, fontWeight:600 }}>
               {de?'Zurück zum Login':'Back to Login'}
             </button>
           </div>
@@ -106,7 +143,9 @@ export default function ScenvyAuth() {
             {mode!=='forgot' && (
               <div style={{ display:'flex', background:C.card, border:`1px solid ${C.border}`, borderRadius:12, padding:4, marginBottom:20 }}>
                 {[['login',de?'Einloggen':'Sign In'],['register',de?'Registrieren':'Sign Up']].map(([m,label])=>(
-                  <button key={m} onClick={()=>{setMode(m);setError('')}} style={{ flex:1, padding:'9px 0', borderRadius:9, border:'none', cursor:'pointer', background:mode===m?C.purple:'transparent', color:mode===m?C.white:C.muted, fontWeight:mode===m?700:400, fontSize:14, fontFamily:'inherit', transition:'all .2s' }}>{label}</button>
+                  <button key={m} onClick={()=>{setMode(m);setError('')}} style={{ flex:1, padding:'9px 0', borderRadius:9, border:'none', cursor:'pointer', background:mode===m?C.purple:'transparent', color:C.white, fontSize:12, fontWeight:600, transition:'all 0.2s' }}>
+                    {label}
+                  </button>
                 ))}
               </div>
             )}
@@ -123,7 +162,7 @@ export default function ScenvyAuth() {
 
               <F label="E-MAIL *" value={email} onChange={setEmail} placeholder="deine@email.de" type="email" onEnter={mode==='login'?doLogin:mode==='forgot'?doReset:undefined}/>
 
-              {mode!=='forgot' && <FPw label={de?'PASSWORT *':'PASSWORD *'} value={pw} onChange={setPw} onEnter={mode==='login'?doLogin:undefined} hint={mode==='register'?(de?'Mindestens 8 Zeichen':'Min. 8 characters'):undefined}/>}
+              {mode!=='forgot' && <FPw label={de?'PASSWORT *':'PASSWORD *'} value={pw} onChange={setPw} onEnter={mode==='login'?doLogin:undefined} hint={mode==='register'?(de?'Mindestens 8 Zeichen.':'Min. 8 characters.'):undefined}/>}
               {mode==='register' && <FPw label={de?'PASSWORT WIEDERHOLEN *':'CONFIRM PASSWORD *'} value={pw2} onChange={setPw2}/>}
 
               {error && <div style={{ fontSize:13, color:C.pink, marginBottom:14, padding:'10px 14px', background:`${C.pink}18`, borderRadius:8 }}>{error}</div>}
