@@ -4,23 +4,35 @@ import { supabase } from '@/api/supabaseClient'
 import { C, grad } from '@/tokens'
 import { Eye, EyeOff } from 'lucide-react'
 
-const F = ({ label, value, onChange, placeholder, type='text', onEnter }) => (
+const F = ({ label, value, onChange, placeholder, type='text', onEnter, id, name }) => (
   <div style={{ marginBottom:14 }}>
-    <label style={{ fontSize:11, color:C.muted, display:'block', marginBottom:6, fontWeight:600, letterSpacing:1 }}>{label}</label>
-    <input value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} type={type}
+    <label htmlFor={id} style={{ fontSize:11, color:C.muted, display:'block', marginBottom:6, fontWeight:600, letterSpacing:1 }}>{label}</label>
+    <input 
+      id={id}
+      name={name || id}
+      value={value} 
+      onChange={e=>onChange(e.target.value)} 
+      placeholder={placeholder} 
+      type={type}
       onKeyDown={e=>e.key==='Enter'&&onEnter?.()}
       style={{ width:'100%', padding:'11px 14px', borderRadius:9, border:`1px solid ${C.border}`, background:C.bg, color:C.white, fontSize:13, outline:'none', fontFamily:'inherit' }}/>
   </div>
 )
 
-const FPw = ({ label, value, onChange, onEnter, hint }) => {
+const FPw = ({ label, value, onChange, onEnter, hint, id, name }) => {
   const [show, setShow] = useState(false)
   return (
     <div style={{ marginBottom:14 }}>
-      <label style={{ fontSize:11, color:C.muted, display:'block', marginBottom:6, fontWeight:600, letterSpacing:1 }}>{label}</label>
+      <label htmlFor={id} style={{ fontSize:11, color:C.muted, display:'block', marginBottom:6, fontWeight:600, letterSpacing:1 }}>{label}</label>
       <div style={{ position:'relative' }}>
-        <input value={value} onChange={e=>onChange(e.target.value)} placeholder="••••••••"
-          type={show?'text':'password'} onKeyDown={e=>e.key==='Enter'&&onEnter?.()}
+        <input 
+          id={id}
+          name={name || id}
+          value={value} 
+          onChange={e=>onChange(e.target.value)} 
+          placeholder="••••••••"
+          type={show?'text':'password'} 
+          onKeyDown={e=>e.key==='Enter'&&onEnter?.()}
           style={{ width:'100%', padding:'11px 44px 11px 14px', borderRadius:9, border:`1px solid ${C.border}`, background:C.bg, color:C.white, fontSize:13, outline:'none', fontFamily:'inherit' }}/>
         <button onClick={()=>setShow(s=>!s)} style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:C.muted, cursor:'pointer' }}>
           {show?<EyeOff size={16}/>:<Eye size={16}/>}
@@ -171,15 +183,15 @@ export default function ScenvyAuth() {
 
               {mode==='register' && (
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-                  <F label={de?'NAME *':'NAME *'} value={name} onChange={setName} placeholder="Max Mustermann"/>
-                  <F label={de?'VENUE':'VENUE'} value={venue} onChange={setVenue} placeholder="Mein Restaurant"/>
+                  <F id="full-name" name="full_name" label={de?'NAME *':'NAME *'} value={name} onChange={setName} placeholder="Max Mustermann"/>
+                  <F id="venue-name" name="venue_name" label={de?'VENUE':'VENUE'} value={venue} onChange={setVenue} placeholder="Mein Restaurant"/>
                 </div>
               )}
 
-              <F label="E-MAIL *" value={email} onChange={setEmail} placeholder="deine@email.de" type="email" onEnter={mode==='login'?doLogin:mode==='forgot'?doReset:undefined}/>
+              <F id="email" name="email" label="E-MAIL *" value={email} onChange={setEmail} placeholder="deine@email.de" type="email" onEnter={mode==='login'?doLogin:mode==='forgot'?doReset:undefined}/>
 
-              {mode!=='forgot' && <FPw label={de?'PASSWORT *':'PASSWORD *'} value={pw} onChange={setPw} onEnter={mode==='login'?doLogin:undefined} hint={mode==='register'?(de?'Mindestens 8 Zeichen.':'Min. 8 characters.'):undefined}/>}
-              {mode==='register' && <FPw label={de?'PASSWORT WIEDERHOLEN *':'CONFIRM PASSWORD *'} value={pw2} onChange={setPw2}/>}
+              {mode!=='forgot' && <FPw id="password" name="password" label={de?'PASSWORT *':'PASSWORD *'} value={pw} onChange={setPw} onEnter={mode==='login'?doLogin:undefined} hint={mode==='register'?(de?'Mindestens 8 Zeichen.':'Min. 8 characters.'):undefined}/>}
+              {mode==='register' && <FPw id="password-confirm" name="password_confirm" label={de?'PASSWORT WIEDERHOLEN *':'CONFIRM PASSWORD *'} value={pw2} onChange={setPw2}/>}
 
               {error && <div style={{ fontSize:13, color:C.pink, marginBottom:14, padding:'10px 14px', background:`${C.pink}18`, borderRadius:8 }}>{error}</div>}
 
