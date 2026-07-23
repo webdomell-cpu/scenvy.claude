@@ -9,22 +9,28 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   const loadProfile = async (userId) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*, tenants(id, name, plan, status)')
-      .eq('id', userId)
-      .single()
-    if (data) {
-      setProfile(data)
-      setUser({
-        id:        data.id,
-        email:     data.email,
-        name:      data.full_name,
-        role:      data.role,           // 'admin' | 'tenant_owner' | 'tenant_member'
-        tenant_id: data.tenant_id,
-        tenant:    data.tenants,
-        avatar:    data.avatar_url,
-      })
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*, tenants(id, name, plan, status)')
+        .eq('id', userId)
+        .single()
+      if (data) {
+        setProfile(data)
+        setUser({
+          id:        data.id,
+          email:     data.email,
+          name:      data.full_name,
+          role:      data.role,           // 'admin' | 'superadmin' | 'tenant_owner' | 'tenant_member'
+          tenant_id: data.tenant_id,
+          tenant:    data.tenants,
+          avatar:    data.avatar_url,
+        })
+      }
+    } catch (err) {
+      console.error('Error loading profile:', err)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -40,8 +46,8 @@ export function AuthProvider({ children }) {
       } else {
         setUser(null)
         setProfile(null)
+        setLoading(false)
       }
-      setLoading(false)
     })
 
     return () => subscription.unsubscribe()
