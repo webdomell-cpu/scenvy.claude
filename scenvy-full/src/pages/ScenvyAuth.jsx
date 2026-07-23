@@ -34,7 +34,7 @@ const FPw = ({ label, value, onChange, onEnter, hint, id, name }) => {
           type={show?'text':'password'} 
           onKeyDown={e=>e.key==='Enter'&&onEnter?.()}
           style={{ width:'100%', padding:'11px 44px 11px 14px', borderRadius:9, border:`1px solid ${C.border}`, background:C.bg, color:C.white, fontSize:13, outline:'none', fontFamily:'inherit' }}/>
-        <button onClick={()=>setShow(s=>!s)} style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:C.muted, cursor:'pointer' }}>
+        <button type="button" onClick={()=>setShow(s=>!s)} style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:C.muted, cursor:'pointer' }}>
           {show?<EyeOff size={16}/>:<Eye size={16}/>}
         </button>
       </div>
@@ -57,7 +57,8 @@ export default function ScenvyAuth() {
   const [sent,    setSent]    = useState(false)
   const de = navigator.language?.startsWith('de')
 
-  const doLogin = async () => {
+  const doLogin = async (e) => {
+    e?.preventDefault()
     setError(''); setLoading(true)
     try {
       const { data, error: e } = await supabase.auth.signInWithPassword({ email, password:pw })
@@ -109,7 +110,8 @@ export default function ScenvyAuth() {
     }
   }
 
-  const doRegister = async () => {
+  const doRegister = async (e) => {
+    e?.preventDefault()
     setError(''); setLoading(true)
     try {
       if (!name||!email||!pw) { setError(de?'Pflichtfelder ausfüllen.':'Fill required fields.'); setLoading(false); return }
@@ -126,7 +128,8 @@ export default function ScenvyAuth() {
     setLoading(false)
   }
 
-  const doReset = async () => {
+  const doReset = async (e) => {
+    e?.preventDefault()
     setError(''); setLoading(true)
     try {
       const { error:e } = await supabase.auth.resetPasswordForEmail(email, { redirectTo:`${window.location.origin}/auth?mode=reset` })
@@ -137,8 +140,8 @@ export default function ScenvyAuth() {
     setLoading(false)
   }
 
-  const SubmitBtn = ({ onClick, label }) => (
-    <button onClick={onClick} disabled={loading} style={{ width:'100%', padding:'13px 0', borderRadius:12, border:'none', cursor:loading?'wait':'pointer', background:loading?C.dim:grad(C.purple,C.pink), color:C.white, fontSize:14, fontWeight:600, transition:'all 0.2s' }}>
+  const SubmitBtn = ({ onClick, label, type='submit' }) => (
+    <button type={type} onClick={onClick} disabled={loading} style={{ width:'100%', padding:'13px 0', borderRadius:12, border:'none', cursor:loading?'wait':'pointer', background:loading?C.dim:grad(C.purple,C.pink), color:C.white, fontSize:14, fontWeight:600, transition:'all 0.2s' }}>
       {loading?'...' : label}
     </button>
   )
@@ -171,14 +174,19 @@ export default function ScenvyAuth() {
             {mode!=='forgot' && (
               <div style={{ display:'flex', background:C.card, border:`1px solid ${C.border}`, borderRadius:12, padding:4, marginBottom:20 }}>
                 {[['login',de?'Einloggen':'Sign In'],['register',de?'Registrieren':'Sign Up']].map(([m,label])=>(
-                  <button key={m} onClick={()=>{setMode(m);setError('')}} style={{ flex:1, padding:'9px 0', borderRadius:9, border:'none', cursor:'pointer', background:mode===m?C.purple:'transparent', color:C.white, fontSize:12, fontWeight:600, transition:'all 0.2s' }}>
+                  <button key={m} type="button" onClick={()=>{setMode(m);setError('')}} style={{ flex:1, padding:'9px 0', borderRadius:9, border:'none', cursor:'pointer', background:mode===m?C.purple:'transparent', color:C.white, fontSize:12, fontWeight:600, transition:'all 0.2s' }}>
                     {label}
                   </button>
                 ))}
               </div>
             )}
 
-            <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:22, padding:28 }}>
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              if (mode === 'login') doLogin(e)
+              else if (mode === 'register') doRegister(e)
+              else doReset(e)
+            }} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:22, padding:28 }}>
               {mode==='forgot' && <div style={{ fontSize:16, fontWeight:700, marginBottom:16 }}>{de?'Passwort zurücksetzen':'Reset Password'}</div>}
 
               {mode==='register' && (
@@ -188,21 +196,21 @@ export default function ScenvyAuth() {
                 </div>
               )}
 
-              <F id="email" name="email" label="E-MAIL *" value={email} onChange={setEmail} placeholder="deine@email.de" type="email" onEnter={mode==='login'?doLogin:mode==='forgot'?doReset:undefined}/>
+              <F id="email" name="email" label="E-MAIL *" value={email} onChange={setEmail} placeholder="deine@email.de" type="email"/>
 
-              {mode!=='forgot' && <FPw id="password" name="password" label={de?'PASSWORT *':'PASSWORD *'} value={pw} onChange={setPw} onEnter={mode==='login'?doLogin:undefined} hint={mode==='register'?(de?'Mindestens 8 Zeichen.':'Min. 8 characters.'):undefined}/>}
+              {mode!=='forgot' && <FPw id="password" name="password" label={de?'PASSWORT *':'PASSWORD *'} value={pw} onChange={setPw} hint={mode==='register'?(de?'Mindestens 8 Zeichen.':'Min. 8 characters.'):undefined}/>}
               {mode==='register' && <FPw id="password-confirm" name="password_confirm" label={de?'PASSWORT WIEDERHOLEN *':'CONFIRM PASSWORD *'} value={pw2} onChange={setPw2}/>}
 
               {error && <div style={{ fontSize:13, color:C.pink, marginBottom:14, padding:'10px 14px', background:`${C.pink}18`, borderRadius:8 }}>{error}</div>}
 
-              <SubmitBtn onClick={mode==='login'?doLogin:mode==='register'?doRegister:doReset}
+              <SubmitBtn 
                 label={mode==='login'?(de?'Einloggen →':'Sign In →'):mode==='register'?(de?'Account erstellen →':'Create Account →'):(de?'Link senden →':'Send Link →')}/>
 
               <div style={{ textAlign:'center', marginTop:14 }}>
                 {mode==='login' && <span onClick={()=>{setMode('forgot');setError('')}} style={{ fontSize:12, color:C.muted, cursor:'pointer' }}>{de?'Passwort vergessen?':'Forgot password?'}</span>}
                 {mode==='forgot' && <span onClick={()=>{setMode('login');setError('')}} style={{ fontSize:13, color:C.purple, cursor:'pointer', fontWeight:600 }}>← {de?'Zurück':'Back'}</span>}
               </div>
-            </div>
+            </form>
           </>
         )}
 
