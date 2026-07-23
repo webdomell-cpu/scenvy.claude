@@ -57,12 +57,15 @@ export default function ScenvyAuth() {
     if (!name||!email||!pw) { setError(de?'Pflichtfelder ausfüllen.':'Fill required fields.'); setLoading(false); return }
     if (pw!==pw2)           { setError(de?'Passwörter stimmen nicht überein.':'Passwords do not match.'); setLoading(false); return }
     if (pw.length<8)        { setError(de?'Mindestens 8 Zeichen.':'Min. 8 characters.'); setLoading(false); return }
-    const { error:e } = await supabase.auth.signUp({
+    const { data, error:e } = await supabase.auth.signUp({
       email, password:pw,
       options:{ data:{ full_name:name, venue_name:venue||name }, emailRedirectTo:`${window.location.origin}/dashboard` }
     })
-    if (e) setError(e.message); else setSent(true)
-    setLoading(false)
+    if (e) { setError(e.message); setLoading(false); return }
+    // Trigger auto-confirms email, so try signing in immediately
+    const { error:signInErr } = await supabase.auth.signInWithPassword({ email, password:pw })
+    if (signInErr) { setError(signInErr.message); setLoading(false) }
+    // onAuthStateChange fires → loadProfile → PublicOnly redirects by role
   }
 
   const doReset = async () => {
