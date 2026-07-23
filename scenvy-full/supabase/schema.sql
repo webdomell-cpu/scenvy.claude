@@ -124,7 +124,7 @@ create trigger on_auth_user_created
   for each row execute function handle_new_user();
 
 -- ─── ROW LEVEL SECURITY ──────────────────────────────────
--- First disable RLS to set up policies cleanly
+-- Disable RLS temporarily
 alter table profiles disable row level security;
 alter table tenants disable row level security;
 alter table locations disable row level security;
@@ -159,6 +159,15 @@ drop policy if exists "reels_public_live" on reels;
 drop policy if exists "scan_events_insert" on scan_events;
 drop policy if exists "scan_events_tenant" on scan_events;
 
+-- Drop helper functions if they exist
+drop function if exists get_user_role(uuid);
+
+-- Create helper function to get user role
+create or replace function get_user_role(user_id uuid)
+returns text as $$
+  select role from profiles where id = user_id
+$$ language sql stable;
+
 -- Enable RLS
 alter table tenants    enable row level security;
 alter table profiles   enable row level security;
@@ -167,65 +176,81 @@ alter table reels      enable row level security;
 alter table scan_events enable row level security;
 
 -- ─── PROFILES POLICIES ────────────────────────────────────
--- All authenticated users can read their own profile
+-- Users can always read their own profile
 create policy "profiles_select_own" on profiles for select
-  using (auth.uid() = id);
+  using (id = auth.uid());
 
--- Admins and superadmins can read all profiles
+-- Anyone with admin role can read all profiles
 create policy "profiles_select_admin" on profiles for select
-  using ((select role from profiles where id = auth.uid()) in ('admin', 'superadmin'));
+  using (role in ('admin', 'superadmin'));
 
 -- Users can update their own profile
 create policy "profiles_update_own" on profiles for update
-  using (auth.uid() = id);
+  using (id = auth.uid());
 
 -- ─── TENANTS POLICIES ─────────────────────────────────────
--- Users can read their own tenant
+-- Users can read tenants they belong to
 create policy "tenants_select_own" on tenants for select
-  using (id in (select tenant_id from profiles where id = auth.uid()));
+  using (id in (
+    select tenant_id from profiles where id = auth.uid() and tenant_id is not null
+  ));
 
 -- Admins/superadmins can read all tenants
 create policy "tenants_select_admin" on tenants for select
-  using ((select role from profiles where id = auth.uid()) in ('admin', 'superadmin'));
+  using (
+    (select role from profiles where id = auth.uid()) in ('admin', 'superadmin')
+  );
 
 -- ─── LOCATIONS POLICIES ───────────────────────────────────
 -- Tenant members see their locations
 create policy "locations_select_tenant" on locations for select
-  using (tenant_id in (select tenant_id from profiles where id = auth.uid()));
+  using (tenant_id in (
+    select tenant_id from profiles where id = auth.uid() and tenant_id is not null
+  ));
 
 -- Admins/superadmins see all locations
 create policy "locations_select_admin" on locations for select
-  using ((select role from profiles where id = auth.uid()) in ('admin', 'superadmin'));
+  using (
+    (select role from profiles where id = auth.uid()) in ('admin', 'superadmin')
+  );
 
--- Public read for active locations (guest view)
+-- Public (anonymous) can see active locations
 create policy "locations_select_public" on locations for select
   using (active = true and auth.role() = 'anon');
 
 -- ─── REELS POLICIES ───────────────────────────────────────
 -- Tenant members see their reels
 create policy "reels_select_tenant" on reels for select
-  using (tenant_id in (select tenant_id from profiles where id = auth.uid()));
+  using (tenant_id in (
+    select tenant_id from profiles where id = auth.uid() and tenant_id is not null
+  ));
 
 -- Admins/superadmins see all reels
 create policy "reels_select_admin" on reels for select
-  using ((select role from profiles where id = auth.uid()) in ('admin', 'superadmin'));
+  using (
+    (select role from profiles where id = auth.uid()) in ('admin', 'superadmin')
+  );
 
--- Public read for live reels (guest view)
+-- Public (anonymous) can see live reels
 create policy "reels_select_public" on reels for select
   using (status = 'live' and auth.role() = 'anon');
 
 -- ─── SCAN EVENTS POLICIES ─────────────────────────────────
--- Anyone can insert scan events
+-- Anyone can insert scan events (for guest tracking)
 create policy "scan_events_insert_public" on scan_events for insert
   with check (true);
 
 -- Tenant members can read their scan events
 create policy "scan_events_select_tenant" on scan_events for select
-  using (tenant_id in (select tenant_id from profiles where id = auth.uid()));
+  using (tenant_id in (
+    select tenant_id from profiles where id = auth.uid() and tenant_id is not null
+  ));
 
 -- Admins/superadmins can read all scan events
 create policy "scan_events_select_admin" on scan_events for select
-  using ((select role from profiles where id = auth.uid()) in ('admin', 'superadmin'));
+  using (
+    (select role from profiles where id = auth.uid()) in ('admin', 'superadmin')
+  );
 
 -- ─── ADMIN VIEW: tenants with counts ─────────────────────
 drop view if exists tenants_with_counts;
